@@ -224,8 +224,23 @@ def delete_page_block(block_id):
     return {'message': f'PageBlock {block_id} deleted!'}
 
 
-
-
+@app.route('/pages/<int:id>', methods=['GET'])
+def get_page_by_id(id):
+    page = Page.query.get(id)
+    if not page:
+        return {'error': 'Page not found!'}, 404
+    response = {
+        "title": page.title,
+        "id": page.id,
+        "blocks": [
+            {
+                "id": block.id,
+                "block_type": block.block_type
+            }
+            for block in page.blocks
+        ]
+    }
+    return jsonify(response)
 
 
 
