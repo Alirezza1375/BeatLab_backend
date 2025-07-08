@@ -128,10 +128,19 @@ def add_text():
     return jsonify({'message': 'text added successfully'}), 200
 
 
+@app.route('/texts/<int:id>', methods=['GET'])
+def get_text_by_id(id):
+    text = Text.query.get(id)
+    if not text:
+        return jsonify({'message': 'Text not found'}), 404
+    return text_schema.dump(text), 200
+
+
 @app.route('/pages', methods=['GET'])
 def get_pages():
     pages = Page.query.all()
     return jsonify([page_schema.dump(page) for page in pages])
+
 
 @app.route('/pages', methods=['POST'])
 def add_pages():
@@ -234,7 +243,7 @@ def get_page_by_id(id):
         "id": page.id,
         "blocks": [
             {
-                "id": block.id,
+                "block_id": block.block_id,
                 "block_type": block.block_type
             }
             for block in page.blocks

@@ -48,8 +48,7 @@ class PageBlock(db.Model):
 # new table -> Pages
 class Page(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title =\
-        db.Column(db.String, nullable=False)
+    title = db.Column(db.String, nullable=False)
     blocks = db.relationship('PageBlock', back_populates='page', cascade='all, delete-orphan')
 
 
