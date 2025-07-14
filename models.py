@@ -51,6 +51,12 @@ class Page(db.Model):
     title = db.Column(db.String, nullable=False)
     blocks = db.relationship('PageBlock', back_populates='page', cascade='all, delete-orphan')
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title": self.title
+        }
+
 
 class Beat(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -6,7 +6,7 @@ from marshmallow import ValidationError
 
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
 
 
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///drum_website.db'
@@ -105,6 +105,18 @@ def get_beat_by_id(id):
     return beat_schema.dump(beat), 200
 
 
+@app.route('/beats/<int:id>', methods=['PUT'])
+def update_beat(id):
+    beat = Beat.query.get_or_404(id)
+    data = request.get_json()
+    beat.beat_name = data.get("beat_name", beat.beat_name)
+    beat.genre = data.get("genre", beat.genre)
+    beat.beat_schema = data.get("beat_schema", beat.beat_schema)
+    beat.bpm = data.get("bpm", beat.bpm)
+    db.session.commit()
+    return jsonify({"message": "Beat updated successfully!"})
+
+
 @app.route('/texts', methods=['GET'])
 def get_texts():
     texts = Text.query.all()
@@ -155,7 +167,8 @@ def add_pages():
 
     db.session.add(new_page)
     db.session.commit()
-    return jsonify({'message': 'page added successfully'}), 200
+    print(new_page)
+    return jsonify({'message': 'page added successfully', "page": new_page.to_dict()}), 200
 
 
 @app.route('/page_blocks', methods=['GET'])
@@ -244,7 +257,8 @@ def get_page_by_id(id):
         "blocks": [
             {
                 "block_id": block.block_id,
-                "block_type": block.block_type
+                "block_type": block.block_type,
+                "position": block.position
             }
             for block in page.blocks
         ]
