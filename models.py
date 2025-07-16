@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
@@ -9,13 +10,23 @@ class User(db.Model):
     name = db.Column(db.String(50), nullable=False)
     family_name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    # make it an Enum (beginner, intermediate, advanced)
     level = db.Column(db.String(50), nullable=False)
-    # Add Enum(user role, student or instructor)
+    password_hash = db.Column(db.String(128), nullable=False)  # new field
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     def to_dict(self):
-        return {"id": self.id, "name": self.name, "family_name": self.family_name, "email": self.email,
-                "level": self.level}
+        return {
+            "id": self.id,
+            "name": self.name,
+            "family_name": self.family_name,
+            "email": self.email,
+            "level": self.level
+        }
 
     def __repr__(self):
         return f'<User {self.name} {self.family_name}>'

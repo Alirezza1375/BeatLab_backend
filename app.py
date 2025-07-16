@@ -6,7 +6,8 @@ from marshmallow import ValidationError
 
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+
 
 
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///drum_website.db'
@@ -55,10 +56,12 @@ def register():
         email=data['email'],
         level=data['level']
     )
+    new_user.set_password(data['password'])  # hash and set password
 
     db.session.add(new_user)
     db.session.commit()
-    return jsonify({'message': 'user added successfully'})
+
+    return jsonify({'message': 'User added successfully'})
 
 
 @app.route('/users', methods=['GET'])
