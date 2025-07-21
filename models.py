@@ -7,11 +7,10 @@ db = SQLAlchemy()
 # create a User class that has id(primary_key), name, family_name and email(unique) as tables
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    family_name = db.Column(db.String(50), nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     level = db.Column(db.String(50), nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)  # new field
+    password_hash = db.Column(db.String(128), nullable=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -22,14 +21,13 @@ class User(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
-            "name": self.name,
-            "family_name": self.family_name,
+            "username": self.username,
             "email": self.email,
             "level": self.level
         }
 
     def __repr__(self):
-        return f'<User {self.name} {self.family_name}>'
+        return f'<User {self.username}>'
 
 
 # new table at db -> Text

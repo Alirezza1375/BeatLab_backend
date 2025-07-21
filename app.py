@@ -3,15 +3,19 @@ from models import db, User, Beat, Text, Page, PageBlock
 from schemas import UserSchema, BeatSchema, TextSchema, PageSchema, PageBlocksSchema
 from flask_cors import CORS
 from marshmallow import ValidationError
+import os
+import jwt
+from datetime import datetime, timedelta, timezone
+from sqlalchemy import or_
 
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'd1d327b3d97cd29371ae2d15ff396b20c19205903ba705a383120716e720ab38')
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
 
 
-
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///drum_website.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db?check_same_thread=False'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db?check_same_thread=False'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///drum_website.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -26,7 +30,6 @@ beat_schema = BeatSchema()
 text_schema = TextSchema()
 page_schema = PageSchema()
 page_block_schema = PageBlocksSchema()
-
 
 
 with app.app_context():
@@ -50,18 +53,47 @@ def register():
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'message': 'Email already exists'}), 409
 
+    if User.query.filter_by(username=data['username']).first():
+        return jsonify({'message': 'Username already exists'}), 409
+
     new_user = User(
-        name=data['name'],
-        family_name=data['family_name'],
+        username=data['username'],
         email=data['email'],
         level=data['level']
     )
-    new_user.set_password(data['password'])  # hash and set password
+    new_user.set_password(data['password'])
 
     db.session.add(new_user)
     db.session.commit()
 
     return jsonify({'message': 'User added successfully'})
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    identifier = data.get('identifier')  # could be email or username
+    password = data.get('password')
+
+    if not identifier or not password:
+        return jsonify({"message": "Username/email and password required"}), 400
+
+    user = User.query.filter(
+        or_(User.email == identifier, User.username == identifier)
+    ).first()
+
+    if user and user.check_password(password):
+        token = jwt.encode({
+            'user_id': user.id,
+            'exp': datetime.now(timezone.utc) + timedelta(hours=1)
+        }, app.config['SECRET_KEY'], algorithm='HS256')
+
+        return jsonify({
+            "token": token,
+            "user": user.to_dict()
+        }), 200
+
+    return jsonify({"message": "Invalid username/email or password"}), 401
 
 
 @app.route('/users', methods=['GET'])
