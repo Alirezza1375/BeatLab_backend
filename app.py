@@ -3,8 +3,9 @@ from models import db, User, Beat, Text, Page, PageBlock
 from schemas import UserSchema, BeatSchema, TextSchema, PageSchema, PageBlocksSchema
 from flask_cors import CORS
 from marshmallow import ValidationError
+from functools import wraps
 import os
-import jwt
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import or_
 
@@ -12,6 +13,7 @@ from sqlalchemy import or_
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'd1d327b3d97cd29371ae2d15ff396b20c19205903ba705a383120716e720ab38')
 CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+jwt = JWTManager(app)
 
 
 #app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db?check_same_thread=False'
@@ -34,6 +36,17 @@ page_block_schema = PageBlocksSchema()
 
 with app.app_context():
     db.create_all()
+
+
+def admin_required(fn):
+    @wraps(fn)
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+        claims = get_jwt()
+        if claims['role'] != 'admin':
+            return jsonify(msg='You are not allowed to see this, you are not an admin!'), 403
+        return fn(*args, **kwargs)
+    return wrapper
 
 
 # create a test route to see everything works.
@@ -72,6 +85,7 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
+    print(data)
     identifier = data.get('identifier')  # could be email or username
     password = data.get('password')
 
@@ -83,13 +97,11 @@ def login():
     ).first()
 
     if user and user.check_password(password):
-        token = jwt.encode({
-            'user_id': user.id,
-            'exp': datetime.now(timezone.utc) + timedelta(hours=1)
-        }, app.config['SECRET_KEY'], algorithm='HS256')
+        print(user)
+        access_token = create_access_token(identity=user.to_dict()['username'], additional_claims={"role": "user"})
 
         return jsonify({
-            "token": token,
+            "token": access_token,
             "user": user.to_dict()
         }), 200
 
@@ -123,6 +135,7 @@ def add_beat():
 
 
 @app.route('/beats', methods=['GET'])
+@jwt_required()
 def get_beats():
     beats = Beat.query.all()
     print(beats)
