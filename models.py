@@ -12,6 +12,7 @@ class User(db.Model):
     level = db.Column(db.String(50), nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
 
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -34,10 +35,12 @@ class User(db.Model):
 class Text(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.String, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def to_dict(self):
         return {"id": self.id,
-                "content": self.content
+                "content": self.content,
+                "user_id": self.user_id
                 }
 
     def __repr__(self):
@@ -59,11 +62,13 @@ class Page(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
     blocks = db.relationship('PageBlock', back_populates='page', cascade='all, delete-orphan')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def to_dict(self):
         return {
             "id": self.id,
-            "title": self.title
+            "title": self.title,
+            "user_id": self.user_id
         }
 
 

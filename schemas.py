@@ -12,6 +12,7 @@ class UserSchema(Schema):
 class TextSchema(Schema):
     id = fields.Int(dump_only=True)
     content = fields.Str(required=True, validate=validate.Length(min=1, max=500))
+    user_id = fields.Int(required=True)
 
 
 class PageBlocksSchema(Schema):
@@ -25,6 +26,7 @@ class PageBlocksSchema(Schema):
 class PageSchema(Schema):
     id = fields.Int(dump_only=True)
     title = fields.Str(required=True, validate=validate.Length(min=1, max=100))
+    user_id = fields.Int(required=True)
 
 
 class BeatSchema(Schema):

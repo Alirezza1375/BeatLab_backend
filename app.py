@@ -5,9 +5,10 @@ from flask_cors import CORS
 from marshmallow import ValidationError
 from functools import wraps
 import os
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt, current_user
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import or_
+
 
 
 app = Flask(__name__)
@@ -49,7 +50,6 @@ def admin_required(fn):
     return wrapper
 
 
-# create a test route to see everything works.
 @app.route('/', methods=['GET'])
 def home():
     return 'It works!'
@@ -85,7 +85,6 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    print(data)
     identifier = data.get('identifier')  # could be email or username
     password = data.get('password')
 
@@ -97,8 +96,7 @@ def login():
     ).first()
 
     if user and user.check_password(password):
-        print(user)
-        access_token = create_access_token(identity=user.to_dict()['username'], additional_claims={"role": "user"})
+        access_token = create_access_token(identity=str(user.id), additional_claims={"role": "user"})
 
         return jsonify({
             "token": access_token,
@@ -115,6 +113,7 @@ def users():
 
 
 @app.route('/beats', methods=['POST'])
+@jwt_required()
 def add_beat():
     try:
         data = beat_schema.load(request.get_json())
@@ -137,15 +136,13 @@ def add_beat():
 @app.route('/beats', methods=['GET'])
 @jwt_required()
 def get_beats():
-    beats = Beat.query.all()
-    print(beats)
+    user_id = int(get_jwt_identity())
+    beats = Beat.query.filter_by(user_id=user_id).all()
     return jsonify([beat_schema.dump(beat) for beat in beats])
 
 
-# Add route to get only one beat (Get "/beats/<id>")
-
-
 @app.route('/beats/<int:id>', methods=['GET'])
+@jwt_required()
 def get_beat_by_id(id):
     beat = Beat.query.get(id)
     if not beat:
@@ -166,13 +163,15 @@ def update_beat(id):
 
 
 @app.route('/texts', methods=['GET'])
+@jwt_required()
 def get_texts():
-    texts = Text.query.all()
-    print(texts)
+    user_id = int(get_jwt_identity())
+    texts = Text.query.filter_by(user_id=user_id).all()
     return jsonify([text.to_dict() for text in texts])
 
 
 @app.route('/texts', methods=['POST'])
+@jwt_required()
 def add_text():
     try:
         data = text_schema.load(request.get_json())
@@ -180,7 +179,8 @@ def add_text():
         return jsonify({'message': 'Validation error', 'error': err.messages}), 400
 
     new_text = Text(
-        content=data["content"]
+        content=data["content"],
+        user_id=data['user_id']
     )
 
     db.session.add(new_text)
@@ -189,6 +189,7 @@ def add_text():
 
 
 @app.route('/texts/<int:id>', methods=['GET'])
+@jwt_required()
 def get_text_by_id(id):
     text = Text.query.get(id)
     if not text:
@@ -197,12 +198,15 @@ def get_text_by_id(id):
 
 
 @app.route('/pages', methods=['GET'])
+@jwt_required()
 def get_pages():
-    pages = Page.query.all()
+    user_id = int(get_jwt_identity())
+    pages = Page.query.filter_by(user_id=user_id).all()
     return jsonify([page_schema.dump(page) for page in pages])
 
 
 @app.route('/pages', methods=['POST'])
+@jwt_required()
 def add_pages():
     try:
         data = page_schema.load(request.get_json())
@@ -210,7 +214,8 @@ def add_pages():
         return jsonify({'message': 'Validation error', 'error': err.messages}), 400
 
     new_page = Page(
-        title=data["title"]
+        title=data["title"],
+        user_id=data['user_id']
     )
 
     db.session.add(new_page)
@@ -220,6 +225,7 @@ def add_pages():
 
 
 @app.route('/page_blocks', methods=['GET'])
+@jwt_required()
 def get_page_blocks():
     page_blocks = PageBlock.query.all()
     return jsonify([page_block_schema.dump(page_block) for page_block in page_blocks])
