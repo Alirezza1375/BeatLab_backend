@@ -6,7 +6,7 @@ from marshmallow import ValidationError
 from functools import wraps
 import os
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt, current_user
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from sqlalchemy import or_
 
 
@@ -96,7 +96,8 @@ def login():
     ).first()
 
     if user and user.check_password(password):
-        access_token = create_access_token(identity=str(user.id), additional_claims={"role": "user"})
+        access_token = create_access_token(identity=str(user.id), additional_claims={"role": "user"},
+                                           expires_delta=timedelta(hours=1))
 
         return jsonify({
             "token": access_token,
