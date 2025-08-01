@@ -11,7 +11,7 @@ class UserSchema(Schema):
 
 class TextSchema(Schema):
     id = fields.Int(dump_only=True)
-    content = fields.Str(required=True, validate=validate.Length(min=1, max=500))
+    content = fields.Str(required=True, validate=validate.Length(min=1, max=5000))
     user_id = fields.Int(required=True)
 
 
