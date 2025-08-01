@@ -13,7 +13,7 @@ from sqlalchemy import or_
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'd1d327b3d97cd29371ae2d15ff396b20c19205903ba705a383120716e720ab38')
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+CORS(app)
 jwt = JWTManager(app)
 
 
