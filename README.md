@@ -2,7 +2,7 @@
 Flask + SQLAlchemy REST API for Beat Lab.  
 Handles authentication, beat storage, and data management.
 
-**Frontend repo:** [Beat Lab Frontend](https://github.com/YOUR_USERNAME/YOUR_FRONTEND_REPO)
+**Frontend repo:** [Beat Lab Frontend]https://github.com/Alirezza1375/Beat-Lab
 
 ---
 
